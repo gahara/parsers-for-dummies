@@ -44,11 +44,34 @@ f7 [] = []
 f7 (a:t) = a ++ f7 t 
 
 --убрать дубликаты из списка
-f8 :: [a] -> [a]
+f8 :: Eq a => [a] -> [a]
 f8 [] = []
-f8 (a:t) = if foldr (||) False (map (a ==) t) then f8 t else a : f8 t -- или any (map (a ==) t) то же самое
+f8 (a:t)
+  | foldr (||) False (map (== a) t) = f8 t
+  | otherwise = a : f8 t -- или any (map (a ==) t) то же самое
 
-f8' :: [a] -> [a]
-f8' f l = f [] l
-  where f a [] = a
-        f a b 
+f8' :: Eq a => [a] -> [a]
+f8' l = f [] l
+  where f clear [] = clear
+        f clear (a:t)
+          | foldr (||) False (map (== a) clear) = f clear t
+          | otherwise = f (a:clear) t
+
+qsort :: Ord a => [a] -> [a]
+qsort [] = []
+qsort [a] = [a]
+qsort (h:t) = qsort [ x | x <- t, x <= h ] ++ [h] ++ qsort [ x | x <- t, x > h ]
+
+--список. в нем есть дубликаты. подряд идущие дубликаты упаковать в список
+--[a, a, b, a, a, b, b, c] -> [ 'aa', 'b', 'aa', 'bb', 'c']
+f9 :: Eq a => [a] -> [[a]]
+f9 a = f [] a
+  where f a [] = [a]
+        f [] (h:t) = f [h] t
+        f a@(h':_) (h:t)
+          | h == h' = f (h:a) t
+          | otherwise = a : f [] t
+
+
+f10 :: Eq a => [a] -> [(Int, a)] 
+f10 = map (\(h:t) -> (length t + 1, h)) . f9
