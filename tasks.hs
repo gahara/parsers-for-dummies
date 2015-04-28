@@ -1,4 +1,14 @@
+import Data.Function
+import Control.Applicative
 import Control.Monad.Random
+
+--эта-редукция 
+a1
+a1 b c = (+) b c
+a2 :: Int -> Int -> Int
+a2 b = (+) b
+a3 :: Int -> Int -> Int
+a3 = (+)
 
 --Коля мудак1
 --найти последний элемент списка
@@ -133,6 +143,8 @@ f18 n m _ | n >= m = []
 f18 1 n (h:t) = h : f18 1 (n - 1) t
 f18 n m (h:t) = f18 (n - 1) (m - 1) t
 
+
+
 -- [1,2,3,4] << 2 === [3,4,1,2]
 f19 :: Int -> [a] -> [a]
 f19 _ [] = []
@@ -147,7 +159,7 @@ f20 k (h:t) = h : f20 (k - 1) t
 
 --вставить на место k
 f21 :: Int -> a -> [a] -> [a]
-f21 i  a [] = [a]
+f21 i a [] = [a]
 f21 1 h t = h:t
 f21 n i (h:t) = h : f21 (n - 1) i t
 
@@ -170,7 +182,7 @@ f23' 0 a = return a
 f23' n a = do
   i <- getRandomR (0, length a - 1)
   es <- f23' (n - 1) a
-  return $ a !! i : es
+  return $ a !! i : es -- !! - взять n-й элемент
 
 --вернуть список из n разных лучайных числ от 1 до m
 f24 :: RandomGen g => Int -> Int -> Rand g [Int]
@@ -181,3 +193,48 @@ f24 n m = f n [1..m]
           i <- getRandomR (1, length a)
           es <- f (n - 1) (f20 i a)
           return $ f3 i a : es
+
+--комбинации разных из n по k 
+f26 :: Int -> [a] -> [[a]]
+f26 0 _ = []
+f26 n a | n > length a = []
+f26 1 a = map pure a
+f26 n (h:t) = map (h:) (f26 (n - 1) t) ++ f26 n t
+
+--перестановки хуев
+insert =  f21
+f27' :: [a] -> [[a]]
+f27' [] = []
+f27' [a] = [[a]]
+f27' (h:t) = concat $ map (\x -> map (\n -> insert n h x) [1..length t + 1]) $ f27' t
+
+a1
+a1 b c = (+) b c
+a2 :: Int -> Int -> Int
+a2 b = (+) b
+a3 :: Int -> Int -> Int
+a3 = (+)
+
+--cдеалть нижнее без перестановок
+nub = f8
+f27'' :: [a] -> [Int] -> [[[a]]]
+f27'' a b = map (f27''' a) $ nub $ f27' b
+
+--делает выборки по сколько в [Int]
+f27''' :: [a] -> [Int] -> [[a]]
+f27''' [] [] = []
+f27''' a (h:t) = let (n, m) = splitAt h a
+                 in n : f27''' m t
+
+--список а, список b из чисел, сумма которых равна длине а. надо разбить а на все позможные комбинации выборок по числам во втором списке
+--то есть [1 1 1 1 1 1 1] [2 3 2] = [[1 1] [111] [11]] =[[111] [11] [11]]
+f27 :: [a] -> [Int] -> [[[a]]]
+f27 a b = concat $ map (\x -> f27'' x b) $ f27' a --concat вместо join
+
+qsortBy :: (a -> a -> Ordering) -> [a] -> [a]
+qsortBy f [] = []
+qsortBy f [a] = [a]
+qsortBy f (h:t) = qsortBy f [ x | x <- t, f x h /= GT ] ++ [h] ++ qsortBy f [ x | x <- t, f x h == GT ]
+
+f28 :: [[a]] -> [[a]]
+f28 = qsortBy (compare `on` length)
