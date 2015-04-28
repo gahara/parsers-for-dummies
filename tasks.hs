@@ -1,3 +1,5 @@
+import Control.Monad.Random
+
 --Коля мудак1
 --найти последний элемент списка
 f1 :: [a] -> a
@@ -13,13 +15,13 @@ f2 [a, b] = a
 f2 (a:t) = f2 t
 
 --k-й элемент
-f3 :: [a] -> Integer -> a
-f3 [] n = error "vot pidoras"
-f3 (a:t) 1 = a 
-f3 (a:t) n = f3 t (n - 1)
+f3 :: Int -> [a] -> a
+f3 n [] = error "vot pidoras"
+f3 1 (a:t) = a
+f3 n (a:t) = f3 (n - 1) t
 
 --количество элементов в списке
-f4 :: [a] -> Integer
+f4 :: [a] -> Int
 f4 [] = 0
 f4 (a:t) = f4 t + 1
 
@@ -136,3 +138,46 @@ f19 :: Int -> [a] -> [a]
 f19 _ [] = []
 f19 0 l = l
 f19 n (h:t) = f19 (n - 1) $ t ++ [h]
+
+--удалить k-й
+f20 :: Int -> [a] -> [a]
+f20 _ [] = []
+f20 1 (h:t) = t
+f20 k (h:t) = h : f20 (k - 1) t
+
+--вставить на место k
+f21 :: Int -> a -> [a] -> [a]
+f21 i  a [] = [a]
+f21 1 h t = h:t
+f21 n i (h:t) = h : f21 (n - 1) i t
+
+--для любых перечислимых n и k делает список от n до k
+f22 :: (Ord a, Enum a) => a -> a -> [a]
+f22 n m
+  | n > m = []
+  | otherwise = n : f22 (succ n) m
+
+-- rnd :: Isemechko -> (Float, Isemechko)
+--дан список, взять из него n случайных элементов
+f23 :: RandomGen g => g -> Int -> [a] -> ([a], g)
+f23 g 0 a = (a, g)
+f23 g n a = let (i, g') = randomR (0, length a - 1) g
+                (es, g'') = f23 g' (n - 1) a
+             in (a !! i : es, g'')
+
+f23' :: RandomGen g => Int -> [a] -> Rand g [a]
+f23' 0 a = return a
+f23' n a = do
+  i <- getRandomR (0, length a - 1)
+  es <- f23' (n - 1) a
+  return $ a !! i : es
+
+--вернуть список из n разных лучайных числ от 1 до m
+f24 :: RandomGen g => Int -> Int -> Rand g [Int]
+f24 n m = f n [1..m] 
+  where f 0 _ = return []
+        f _ [] = fail "hui tebe"
+        f n a = do
+          i <- getRandomR (1, length a)
+          es <- f (n - 1) (f20 i a)
+          return $ f3 i a : es
