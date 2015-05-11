@@ -1,14 +1,17 @@
 import Data.Function
 import Control.Applicative
 import Control.Monad.Random
+import Data.List (group, genericLength)
+import Data.PQueue.Prio.Min (MinPQueue)
+import qualified Data.PQueue.Prio.Min as P
 
 --эта-редукция 
-a1
-a1 b c = (+) b c
-a2 :: Int -> Int -> Int
-a2 b = (+) b
-a3 :: Int -> Int -> Int
-a3 = (+)
+--a1
+-- a1 b c = (+) b c
+-- a2 :: Int -> Int -> Int
+-- a2 b = (+) b
+-- a3 :: Int -> Int -> Int
+-- a3 = (+)
 
 --Коля мудак1
 --найти последний элемент списка
@@ -208,12 +211,6 @@ f27' [] = []
 f27' [a] = [[a]]
 f27' (h:t) = concat $ map (\x -> map (\n -> insert n h x) [1..length t + 1]) $ f27' t
 
-a1
-a1 b c = (+) b c
-a2 :: Int -> Int -> Int
-a2 b = (+) b
-a3 :: Int -> Int -> Int
-a3 = (+)
 
 --cдеалть нижнее без перестановок
 nub = f8
@@ -238,3 +235,166 @@ qsortBy f (h:t) = qsortBy f [ x | x <- t, f x h /= GT ] ++ [h] ++ qsortBy f [ x 
 
 f28 :: [[a]] -> [[a]]
 f28 = qsortBy (compare `on` length)
+
+--aritmetic
+
+--определить, простое ли число
+f31 :: Integer -> Bool
+f31 n = all (/= 0) $ map (n `mod`) [2..floor (sqrt $ fromIntegral n)]
+
+--решето Эратосфена
+f31' :: [Integer]
+f31' = 1 : f [2..]
+  where f (h:t) = h : f (filter (\x -> x `mod` h /= 0) t)
+
+--найти наибольший общий делитель
+f32 :: Integer -> Integer -> Integer
+f32 n 0 = n
+f32 0 m = m 
+f32 n m = f32 m $ n `mod` m
+
+f33 :: Integer -> Integer -> Bool
+f33 n m = f32 n m == 1
+
+f34 :: Integer -> Integer
+f34 1 = 1
+f34 n = genericLength $ filter (f33 n) [1..n]
+
+--найти из произведения каких простых чисел состоит число
+f35 :: Integer -> [Integer]
+f35 1 = []
+f35 n = let (_:h:_) = filter (\x -> n `mod` x == 0) f31'
+        in h : f35 (n `div` h)
+
+-- \(h:t) -> 1
+
+type Length = Integer
+
+f36 :: Integer -> [(Integer, Length)]
+f36 a = map (\x@(h:_) -> (h, genericLength x)) $ group $ f35 a
+--f36 = map (\x@(h:_) -> (h, length x)) . group . f35
+
+f37 :: Integer -> Integer
+f37 a =  foldr1 (*) $ map (\(p, m) -> (p - 1) * p ^ (m - 1)) $ f36 a
+
+f39 :: Integer -> Integer -> [Integer]
+f39 a b = takeWhile (<= b) $ dropWhile (< a) f31'
+
+f40 :: Integer -> (Integer, Integer)
+f40 a = let primeList = takeWhile (<= a) f31'
+            x:_ = filter (\x -> (a - x) `elem` primeList) primeList
+        --in head $ filter ((`elem` primeList) . snd) $ map (\x -> (x, a - x)) primeList
+        in (x, a - x)
+
+f41 :: Integer -> Integer -> [(Integer, (Integer, Integer))]
+f41 a b = map (\x -> (x, f40 x)) $ filter even [a..b]
+
+f46 :: (Bool -> Bool -> Bool) -> [((Bool, Bool), Bool)]
+f46 f = [ ((a, b), f a b) | a <- [True, False], b <- [True, False] ]
+
+type Input = [Bool]
+
+f48 :: Integer -> (Input -> Bool) -> [(Input, Bool)]
+--f48 a f = [Input] -> (Input -> Bool) -> [(Input, Bool)]
+f48 a f = map (\x -> (x, f x)) $ dick a
+  where dick :: Integer -> [Input]
+        dick 0 = []
+        dick 1 = [[True], [False]]
+        --dick a = concat $ map (\x -> [True:x, False:x]) $ dick (a - 1) или
+        dick a = let r = dick (a - 1)
+                 in map (True:) r ++ map (False:) r
+--[a] -> (a -> b) -> [(a, b)]
+
+f49 :: Integer -> [String]
+f49 0 = []
+f49 1 = ["0", "1"]
+f49 n = let k = f49 (n - 1)
+        in map ('0':) k ++ map ('1':) (reverse k)
+
+type Code = String
+
+data HTree a = HLeaf a | HNode (HTree a) (HTree a)
+              deriving (Show, Eq)
+
+instance Functor HTree where
+  fmap f (HLeaf a) = HLeaf (f a)
+  fmap f (HNode a b) = HNode (fmap f a) (fmap f b)
+
+--Huffman
+f50 :: [(Int, a)] -> [(Code, a)]
+f50 = dick . P.fromList . map (\(w, a) -> (w, HLeaf ("", a)))
+  where dick :: MinPQueue Int (HTree (Code, a)) -> [(Code, a)]
+        dick p = case P.size p of
+          0 -> []
+          1 -> case snd $ P.findMin p of
+            HLeaf (_, a) -> [("1", a)]
+            t -> cock t
+          _ -> let ((w1, a), p') = P.deleteFindMin p
+                   ((w2, b), p'') = P.deleteFindMin p'
+                   c = HNode (womb '0' a) (womb '1' b)
+               in dick $ P.insert (w1 + w2) c p''
+        cock :: HTree a -> [a]
+        cock (HLeaf a) = [a]
+        cock (HNode a b) = (cock a) ++ (cock b)
+        womb :: Char -> HTree (Code, a) -> HTree (Code, a)
+        womb c t = fmap (\(code, a) -> (c:code, a)) t
+
+data Tree a = Null | Node (Tree a) a (Tree a)
+              deriving (Show, Eq)
+
+f54 :: Integer -> [Tree ()]
+f54 0 = [Null]
+f54 n
+  | odd n = let cs = f54 n'
+            in buildKhui cs cs
+  | even n = let cs1 = f54 n'
+                 cs2 = f54 (n' + 1)
+              in buildKhui cs1 cs2 ++ buildKhui cs2 cs1 
+  where n' = (n - 1) `div` 2  
+
+buildKhui :: [Tree ()] -> [Tree ()] -> [Tree ()]
+--[ ((a, b), f a b) | a <- [True, False], b <- [True, False] ]
+buildKhui a b = [ Node x () y | x <- a, y <- b ]
+
+f55 :: Tree a -> Bool
+f55 Null = True
+f55 (Node a _ b)  = isMirror a b
+
+isMirror :: Tree a -> Tree a -> Bool
+isMirror Null Null = True
+isMirror (Node a _ b) (Node c _ d) =  isMirror a d && isMirror b c
+
+--это была f57, но Коля мудак
+addElem :: Ord a => a -> Tree a -> Tree a
+addElem a Null = Node Null a Null
+addElem e (Node a h b) 
+  | e < h = Node (addElem e a) h b
+  | otherwise = Node a h (addElem e b)   
+
+f58 :: Integer -> [Tree ()]
+f58 a = filter f55 $ f54 a
+
+f59 :: Integer -> [Tree ()]
+f59 0 = [Null]
+f59 n
+  | n == 1 = same
+  | otherwise = same ++ buildKhui c' c'' ++ buildKhui c'' c'
+  where c' = hui (n - 1)
+        c'' = hui (n - 2)
+        same = buildKhui c' c'
+
+hui :: Integer -> [Tree ()]
+hui 0 = [Null]
+hui n = nub $ buildKhui tf tm ++ buildKhui tm tf 
+  where tf = hui (n - 1)
+        tm = penis (n - 1)
+
+penis :: Integer -> [Tree ()]
+penis 0 = [Null]
+penis n = d
+  where womb :: Tree () -> [Tree ()]
+
+
+
+
+
