@@ -1,9 +1,13 @@
+{-# LANGUAGE DeriveFunctor #-}
+
 import Data.Function
+import Data.Foldable
+import Data.Monoid
 import Control.Applicative
 import Control.Monad.Random
 import Data.List (group, genericLength)
-import Data.PQueue.Prio.Min (MinPQueue)
-import qualified Data.PQueue.Prio.Min as P
+--import Data.PQueue.Prio.Min (MinPQueue)
+--import qualified Data.PQueue.Prio.Min as P
 
 --эта-редукция 
 --a1
@@ -321,26 +325,31 @@ instance Functor HTree where
   fmap f (HNode a b) = HNode (fmap f a) (fmap f b)
 
 --Huffman
-f50 :: [(Int, a)] -> [(Code, a)]
-f50 = dick . P.fromList . map (\(w, a) -> (w, HLeaf ("", a)))
-  where dick :: MinPQueue Int (HTree (Code, a)) -> [(Code, a)]
-        dick p = case P.size p of
-          0 -> []
-          1 -> case snd $ P.findMin p of
-            HLeaf (_, a) -> [("1", a)]
-            t -> cock t
-          _ -> let ((w1, a), p') = P.deleteFindMin p
-                   ((w2, b), p'') = P.deleteFindMin p'
-                   c = HNode (womb '0' a) (womb '1' b)
-               in dick $ P.insert (w1 + w2) c p''
-        cock :: HTree a -> [a]
-        cock (HLeaf a) = [a]
-        cock (HNode a b) = (cock a) ++ (cock b)
-        womb :: Char -> HTree (Code, a) -> HTree (Code, a)
-        womb c t = fmap (\(code, a) -> (c:code, a)) t
+--f50 :: [(Int, a)] -> [(Code, a)]
+--f50 = dick . P.fromList . map (\(w, a) -> (w, HLeaf ("", a)))
+--  where dick :: MinPQueue Int (HTree (Code, a)) -> [(Code, a)]
+--        dick p = case P.size p of
+--          0 -> []
+        --   1 -> case snd $ P.findMin p of
+        --     HLeaf (_, a) -> [("1", a)]
+        --     t -> cock t
+        --   _ -> let ((w1, a), p') = P.deleteFindMin p
+        --            ((w2, b), p'') = P.deleteFindMin p'
+        --            c = HNode (womb '0' a) (womb '1' b)
+        --        in dick $ P.insert (w1 + w2) c p''
+        -- cock :: HTree a -> [a]
+        -- cock (HLeaf a) = [a]
+        -- cock (HNode a b) = (cock a) ++ (cock b)
+        -- womb :: Char -> HTree (Code, a) -> HTree (Code, a)
+        -- womb c t = fmap (\(code, a) -> (c:code, a)) t
 
 data Tree a = Null | Node (Tree a) a (Tree a)
-              deriving (Show, Eq)
+              deriving (Show, Eq, Functor)
+
+instance Foldable Tree where
+  -- foldMap :: Monoid m => (a -> m) -> Tree a -> m
+  foldMap f Null = mempty
+  foldMap f (Node a h b) = foldMap f a <> f h <> foldMap f b -- <> сложение элементов моноида
 
 f54 :: Integer -> [Tree ()]
 f54 0 = [Null]
@@ -385,14 +394,35 @@ f59 n
 
 hui :: Integer -> [Tree ()]
 hui 0 = [Null]
-hui n = nub $ buildKhui tf tm ++ buildKhui tm tf 
+hui n
+  | n == 1 = same
+  | otherwise = same ++ buildKhui tf tm ++ buildKhui tm tf 
   where tf = hui (n - 1)
-        tm = penis (n - 1)
+        tm = penis (n - 2)
+        same = buildKhui tf tf
 
 penis :: Integer -> [Tree ()]
-penis 0 = [Null]
-penis n = d
-  where womb :: Tree () -> [Tree ()]
+penis n = concatMap hui [0..n] 
+
+f60 :: Integer -> Integer -> [Tree ()]
+f60 hite emaunt = filter ((== emaunt) . fromIntegral . length) $ f59 hite 
+
+f61 :: Tree a -> Integer
+f61 Null = 0
+f61 (Node Null _ Null) = 1
+f61 (Node l e r) = f61 l + f61 r
+
+f61A :: Tree a -> [a]
+f61A Null = []
+f61A (Node Null a Null) = [a]
+f61A (Node l e r) = f61A l ++ f61A r
+
+f62A :: Integer -> Tree a -> [a]
+f62A _ Null = []
+f62 1 (Node _ a _) = [a]
+f62 n (Node l a r) = f62 (n - 1) l ++ f62 (n - 1) r
+
+
 
 
 
