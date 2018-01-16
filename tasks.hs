@@ -17,23 +17,22 @@ import Data.List (group, genericLength)
 -- a3 :: Int -> Int -> Int
 -- a3 = (+)
 
---Коля мудак1
 --найти последний элемент списка
 f1 :: [a] -> a
-f1 [] = error "dick"
+f1 [] = error "err"
 f1 [a] = a
 f1 (a:t) = f1 t
 
 --предпоследний
 f2 :: [a] -> a
-f2 [] = error "mudak"
-f2 [a] = error "sovsem mudak"
+f2 [] = error "err"
+f2 [a] = error "err"
 f2 [a, b] = a
 f2 (a:t) = f2 t
 
 --k-й элемент
 f3 :: Int -> [a] -> a
-f3 n [] = error "vot pidoras"
+f3 n [] = error "err"
 f3 1 (a:t) = a
 f3 n (a:t) = f3 (n - 1) t
 
@@ -195,7 +194,7 @@ f23' n a = do
 f24 :: RandomGen g => Int -> Int -> Rand g [Int]
 f24 n m = f n [1..m] 
   where f 0 _ = return []
-        f _ [] = fail "hui tebe"
+        f _ [] = fail "error"
         f n a = do
           i <- getRandomR (1, length a)
           es <- f (n - 1) (f20 i a)
@@ -355,15 +354,15 @@ f54 :: Integer -> [Tree ()]
 f54 0 = [Null]
 f54 n
   | odd n = let cs = f54 n'
-            in buildKhui cs cs
+            in buildTree cs cs
   | even n = let cs1 = f54 n'
                  cs2 = f54 (n' + 1)
-              in buildKhui cs1 cs2 ++ buildKhui cs2 cs1 
+              in buildTree cs1 cs2 ++ buildTree cs2 cs1 
   where n' = (n - 1) `div` 2  
 
-buildKhui :: [Tree ()] -> [Tree ()] -> [Tree ()]
+buildTree :: [Tree ()] -> [Tree ()] -> [Tree ()]
 --[ ((a, b), f a b) | a <- [True, False], b <- [True, False] ]
-buildKhui a b = [ Node x () y | x <- a, y <- b ]
+buildTree a b = [ Node x () y | x <- a, y <- b ]
 
 f55 :: Tree a -> Bool
 f55 Null = True
@@ -373,7 +372,7 @@ isMirror :: Tree a -> Tree a -> Bool
 isMirror Null Null = True
 isMirror (Node a _ b) (Node c _ d) =  isMirror a d && isMirror b c
 
---это была f57, но Коля мудак
+--это была f57
 addElem :: Ord a => a -> Tree a -> Tree a
 addElem a Null = Node Null a Null
 addElem e (Node a h b) 
@@ -387,22 +386,22 @@ f59 :: Integer -> [Tree ()]
 f59 0 = [Null]
 f59 n
   | n == 1 = same
-  | otherwise = same ++ buildKhui c' c'' ++ buildKhui c'' c'
-  where c' = hui (n - 1)
-        c'' = hui (n - 2)
-        same = buildKhui c' c'
+  | otherwise = same ++ buildKitem c' c'' ++ buildKitem c'' c'
+  where c' = item (n - 1)
+        c'' = item (n - 2)
+        same = buildKitem c' c'
 
-hui :: Integer -> [Tree ()]
-hui 0 = [Null]
-hui n
+item :: Integer -> [Tree ()]
+item 0 = [Null]
+item n
   | n == 1 = same
-  | otherwise = same ++ buildKhui tf tm ++ buildKhui tm tf 
-  where tf = hui (n - 1)
-        tm = penis (n - 2)
-        same = buildKhui tf tf
+  | otherwise = same ++ buildKitem tf tm ++ buildKitem tm tf 
+  where tf = item (n - 1)
+        tm = helper (n - 2)
+        same = buildKitem tf tf
 
-penis :: Integer -> [Tree ()]
-penis n = concatMap hui [0..n] 
+helper :: Integer -> [Tree ()]
+helper n = concatMap item [0..n] 
 
 f60 :: Integer -> Integer -> [Tree ()]
 f60 hite emaunt = filter ((== emaunt) . fromIntegral . length) $ f59 hite 
